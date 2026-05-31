@@ -8,25 +8,23 @@ import ru.practicum.shareit.exception.DataNotFoundException;
 import ru.practicum.shareit.exception.DuplicatedException;
 import ru.practicum.shareit.exception.ValidationException;
 
-import java.util.Map;
-
 @RestControllerAdvice
 public class ErrorHandler {
     @ExceptionHandler
     @ResponseStatus(HttpStatus.NOT_FOUND)
-    public Map<String, String> handleNotFound(final DataNotFoundException exp) {
-        return Map.of("error", exp.getMessage());
+    public ErrorResponse handleNotFound(final DataNotFoundException exp) {
+        return new ErrorResponse(exp.getMessage());
     }
 
     @ExceptionHandler
     @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public Map<String, String> handleValidation(final ValidationException exp) {
-        return Map.of("error", exp.getMessage());
+    public ErrorResponse handleValidation(final ValidationException exp) {
+        return new ErrorResponse(exp.getMessage());
     }
 
     @ExceptionHandler
     @ResponseStatus(HttpStatus.CONFLICT)
-    public Map<String, String> handleDuplicated(final DuplicatedException exp) {
-        return Map.of("error", exp.getMessage());
+    public ErrorResponse handleDuplicated(final DuplicatedException exp) {
+        return new ErrorResponse(exp.getMessage());
     }
 }

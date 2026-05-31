@@ -3,9 +3,11 @@ package ru.practicum.shareit.user;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import ru.practicum.shareit.exception.DataNotFoundException;
-import ru.practicum.shareit.exception.DuplicatedException;
 
 import java.util.List;
+import java.util.Optional;
+
+import static ru.practicum.shareit.user.UserMapper.map;
 
 @Service
 public class UserServiceImpl implements UserService {
@@ -16,57 +18,62 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public List<User> getAll() {
-        return storage.getAll();
+    public List<UserDto> getAll() {
+        return storage.getAll().stream()
+                .map(UserMapper::map)
+                .toList();
     }
 
     @Override
-    public User get(Long id) {
-        if (!isUserExist(id)) {
+    public UserDto get(Long id) {
+        Optional<User> optionalUser = storage.get(id);
+
+        if (optionalUser.isEmpty()) {
             throw new DataNotFoundException("Пользователь с id = " + id + " не найден.");
         }
-        return storage.get(id);
+        return map(optionalUser.get());
     }
 
     @Override
-    public User add(User user) {
-        isEmailExist(user.getEmail());
-        return storage.add(user);
+    public UserDto add(UserDto userDto) {
+        User user = UserMapper.map(userDto);
+
+        storage.isEmailExist(user.getEmail());
+        return map(storage.add(user));
     }
 
     @Override
-    public User update(User newUser) {
-        User oldUser = get(newUser.getId());
+    public UserDto update(UserDto newUserDto, Long userId) {
+        newUserDto.setId(userId);
 
-        if (newUser.getName() != null) {
-            oldUser.setName(newUser.getName());
+        Optional<User> optionalOldUser = storage.get(newUserDto.getId());
+        if (optionalOldUser.isEmpty()) {
+            throw new DataNotFoundException("Пользователь с id = " + userId + " не найден.");
         }
-        if (newUser.getEmail() != null) {
-            isEmailExist(newUser.getEmail());
-            oldUser.setEmail(newUser.getEmail());
+
+        User oldUser = optionalOldUser.get();
+
+        if (newUserDto.getName() != null && !newUserDto.getName().isBlank()) {
+            oldUser.setName(newUserDto.getName());
         }
-        return storage.update(oldUser);
+        // проверка на email выполняется в UserDto с помощью аннотации
+        if (newUserDto.getEmail() != null && !newUserDto.getEmail().isBlank()) {
+            storage.isEmailExist(newUserDto.getEmail());
+            oldUser.setEmail(newUserDto.getEmail());
+        }
+        return map(storage.update(oldUser));
     }
 
     @Override
-    public User remove(Long id) {
+    public UserDto remove(Long id) {
         if (!isUserExist(id)) {
             throw new DataNotFoundException("Пользователь для удаления с id = " + id + " не найден.");
         }
-        return storage.remove(id);
+        return map(storage.remove(id));
     }
 
     @Override
     public Boolean isUserExist(Long id) {
         return storage.isUserExist(id);
-    }
-
-    private void isEmailExist(String email) {
-        List<User> users = getAll();
-        for (User user : users) {
-            if (user.getEmail().equals(email)) {
-                throw new DuplicatedException("Пользователь с email = " + email + " уже существует.");
-            }
-        }
     }
 }

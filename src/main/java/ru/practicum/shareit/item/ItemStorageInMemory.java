@@ -5,6 +5,7 @@ import org.springframework.stereotype.Repository;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 @Repository("itemStorageInMemory")
 public class ItemStorageInMemory implements ItemStorage {
@@ -25,8 +26,8 @@ public class ItemStorageInMemory implements ItemStorage {
     }
 
     @Override
-    public Item get(Long itemId) {
-        return items.get(itemId);
+    public Optional<Item> get(Long itemId) {
+        return Optional.ofNullable(items.get(itemId));
     }
 
     @Override
@@ -40,8 +41,8 @@ public class ItemStorageInMemory implements ItemStorage {
     public List<Item> find(String text) {
         return items.values().stream()
                 .filter(Item::getAvailable)
-                .filter(item -> item.getName().toLowerCase().contains(text.toLowerCase())
-                        || item.getDescription().toLowerCase().contains(text.toLowerCase()))
+                .filter(item -> item.getName().toLowerCase().contains(text)
+                        || item.getDescription().toLowerCase().contains(text))
                 .toList();
     }
 

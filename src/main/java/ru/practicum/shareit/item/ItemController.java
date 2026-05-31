@@ -8,8 +8,6 @@ import ru.practicum.shareit.validation.Update;
 
 import java.util.List;
 
-import static ru.practicum.shareit.item.ItemMapper.map;
-
 @RestController
 @RequestMapping("/items")
 @RequiredArgsConstructor
@@ -19,35 +17,28 @@ public class ItemController {
     @PostMapping
     public ItemDto add(@Validated(Add.class) @RequestBody ItemDto itemDto,
                        @RequestHeader("X-Sharer-User-Id") Long userId) {
-        Item item = map(itemDto);
-        return map(service.add(item, userId));
+        return service.add(itemDto, userId);
     }
 
     @PatchMapping("/{itemId}")
     public ItemDto update(@Validated(Update.class) @RequestBody ItemDto itemDto,
                           @RequestHeader("X-Sharer-User-Id") Long userId,
                           @PathVariable Long itemId) {
-        Item item = map(itemDto);
-        item.setId(itemId);
-        return map(service.update(item, userId));
+        return service.update(itemDto, userId, itemId);
     }
 
     @GetMapping("/{itemId}")
     public ItemDto get(@PathVariable Long itemId) {
-        return map(service.get(itemId));
+        return service.get(itemId);
     }
 
     @GetMapping
     public List<ItemDto> getOwnerAll(@RequestHeader("X-Sharer-User-Id") Long userId) {
-        return service.getOwnerAll(userId).stream()
-                .map(ItemMapper::map)
-                .toList();
+        return service.getOwnerAll(userId);
     }
 
     @GetMapping("/search")
     public List<ItemDto> find(@RequestParam String text) {
-        return service.find(text).stream()
-                .map(ItemMapper::map)
-                .toList();
+        return service.find(text);
     }
 }

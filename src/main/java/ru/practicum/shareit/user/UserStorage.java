@@ -1,11 +1,12 @@
 package ru.practicum.shareit.user;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface UserStorage {
     List<User> getAll();
 
-    User get(Long id);
+    Optional<User> get(Long id);
 
     User add(User user);
 
@@ -14,4 +15,6 @@ public interface UserStorage {
     User remove(Long id);
 
     Boolean isUserExist(Long id);
+
+    void isEmailExist(String email);
 }

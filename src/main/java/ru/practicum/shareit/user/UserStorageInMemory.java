@@ -1,11 +1,9 @@
 package ru.practicum.shareit.user;
 
 import org.springframework.stereotype.Repository;
+import ru.practicum.shareit.exception.DuplicatedException;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @Repository("userStorageInMemory")
 public class UserStorageInMemory implements UserStorage {
@@ -18,8 +16,8 @@ public class UserStorageInMemory implements UserStorage {
     }
 
     @Override
-    public User get(Long id) {
-        return users.get(id);
+    public Optional<User> get(Long id) {
+        return Optional.ofNullable(users.get(id));
     }
 
     @Override
@@ -45,5 +43,14 @@ public class UserStorageInMemory implements UserStorage {
     @Override
     public Boolean isUserExist(Long id) {
         return users.containsKey(id);
+    }
+
+    @Override
+    public void isEmailExist(String email) {
+        for (User user : users.values()) {
+            if (user.getEmail().equals(email)) {
+                throw new DuplicatedException("Пользователь с email = " + email + " уже существует.");
+            }
+        }
     }
 }

@@ -3,73 +3,92 @@ package ru.practicum.shareit.item;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import ru.practicum.shareit.exception.DataNotFoundException;
-import ru.practicum.shareit.user.UserServiceImpl;
+import ru.practicum.shareit.user.User;
+import ru.practicum.shareit.user.UserStorage;
 
 import java.util.List;
+import java.util.Optional;
+
+import static ru.practicum.shareit.item.ItemMapper.map;
 
 @Service
 public class ItemServiceImpl implements ItemService {
     private final ItemStorage itemStorage;
-    private final UserServiceImpl userService;
+    private final UserStorage userStorage;
 
     public ItemServiceImpl(@Qualifier("itemStorageInMemory") ItemStorage itemStorage,
-                           UserServiceImpl userService) {
+                           @Qualifier("userStorageInMemory") UserStorage userStorage) {
         this.itemStorage = itemStorage;
-        this.userService = userService;
+        this.userStorage = userStorage;
     }
 
     @Override
-    public Item add(Item item, Long userId) {
-        if (!userService.isUserExist(userId)) {
+    public ItemDto add(ItemDto itemDto, Long userId) {
+        Item item = map(itemDto);
+        Optional<User> optionalUser = userStorage.get(userId);
+
+        if (optionalUser.isEmpty()) {
             throw new DataNotFoundException("Пользователь с id = " + userId + " не найден.");
         }
-        item.setOwner(userService.get(userId));
-        userService.get(userId).addItemCount();
-        return itemStorage.add(item);
+        item.setOwner(optionalUser.get());
+        return map(itemStorage.add(item));
     }
 
     @Override
-    public Item update(Item newItem, Long userId) {
-        Item oldItem = get(newItem.getId());
+    public ItemDto update(ItemDto newItemDto, Long userId, Long itemId) {
+        newItemDto.setId(itemId);
+
+        Optional<Item> optionalOldItem = itemStorage.get(newItemDto.getId());
+        if (optionalOldItem.isEmpty()) {
+            throw new DataNotFoundException("Вещь с id = " + itemId + " не найдена.");
+        }
+
+        Item oldItem = optionalOldItem.get();
 
         if (!oldItem.getOwner().getId().equals(userId)) {
             throw new DataNotFoundException("Пользователь с id = " + userId + " не является владельцем вещи.");
         }
 
-        if (newItem.getName() != null) {
-            oldItem.setName(newItem.getName());
+        if (newItemDto.getName() != null && !newItemDto.getName().isBlank()) {
+            oldItem.setName(newItemDto.getName());
         }
-        if (newItem.getDescription() != null) {
-            oldItem.setDescription(newItem.getDescription());
+        if (newItemDto.getDescription() != null && !newItemDto.getDescription().isBlank()) {
+            oldItem.setDescription(newItemDto.getDescription());
         }
-        if (newItem.getAvailable() != null) {
-            oldItem.setAvailable(newItem.getAvailable());
+        if (newItemDto.getAvailable() != null) {
+            oldItem.setAvailable(newItemDto.getAvailable());
         }
-        return itemStorage.update(oldItem);
+        return map(itemStorage.update(oldItem));
     }
 
     @Override
-    public Item get(Long itemId) {
-        if (!isItemExist(itemId)) {
+    public ItemDto get(Long itemId) {
+        Optional<Item> optionalItem = itemStorage.get(itemId);
+
+        if (optionalItem.isEmpty()) {
             throw new DataNotFoundException("Вещь с id = " + itemId + " не найдена.");
         }
-        return itemStorage.get(itemId);
+        return map(optionalItem.get());
     }
 
     @Override
-    public List<Item> getOwnerAll(Long userId) {
-        if (!userService.isUserExist(userId)) {
+    public List<ItemDto> getOwnerAll(Long userId) {
+        if (!userStorage.isUserExist(userId)) {
             throw new DataNotFoundException("Пользователь с id = " + userId + " не найден.");
         }
-        return itemStorage.getOwnerAll(userId);
+        return itemStorage.getOwnerAll(userId).stream()
+                .map(ItemMapper::map)
+                .toList();
     }
 
     @Override
-    public List<Item> find(String text) {
+    public List<ItemDto> find(String text) {
         if (text.isBlank()) {
             return List.of();
         }
-        return itemStorage.find(text);
+        return itemStorage.find(text.toLowerCase()).stream()
+                .map(ItemMapper::map)
+                .toList();
     }
 
     @Override
