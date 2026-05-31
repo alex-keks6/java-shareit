@@ -9,8 +9,6 @@ import ru.practicum.shareit.user.UserStorage;
 import java.util.List;
 import java.util.Optional;
 
-import static ru.practicum.shareit.item.ItemMapper.map;
-
 @Service
 public class ItemServiceImpl implements ItemService {
     private final ItemStorage itemStorage;
@@ -24,14 +22,14 @@ public class ItemServiceImpl implements ItemService {
 
     @Override
     public ItemDto add(ItemDto itemDto, Long userId) {
-        Item item = map(itemDto);
+        Item item = ItemMapper.map(itemDto);
         Optional<User> optionalUser = userStorage.get(userId);
 
         if (optionalUser.isEmpty()) {
             throw new DataNotFoundException("Пользователь с id = " + userId + " не найден.");
         }
         item.setOwner(optionalUser.get());
-        return map(itemStorage.add(item));
+        return ItemMapper.map(itemStorage.add(item));
     }
 
     @Override
@@ -58,7 +56,7 @@ public class ItemServiceImpl implements ItemService {
         if (newItemDto.getAvailable() != null) {
             oldItem.setAvailable(newItemDto.getAvailable());
         }
-        return map(itemStorage.update(oldItem));
+        return ItemMapper.map(itemStorage.update(oldItem));
     }
 
     @Override
@@ -68,7 +66,7 @@ public class ItemServiceImpl implements ItemService {
         if (optionalItem.isEmpty()) {
             throw new DataNotFoundException("Вещь с id = " + itemId + " не найдена.");
         }
-        return map(optionalItem.get());
+        return ItemMapper.map(optionalItem.get());
     }
 
     @Override

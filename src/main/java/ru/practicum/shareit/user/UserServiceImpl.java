@@ -7,8 +7,6 @@ import ru.practicum.shareit.exception.DataNotFoundException;
 import java.util.List;
 import java.util.Optional;
 
-import static ru.practicum.shareit.user.UserMapper.map;
-
 @Service
 public class UserServiceImpl implements UserService {
     private final UserStorage storage;
@@ -31,7 +29,7 @@ public class UserServiceImpl implements UserService {
         if (optionalUser.isEmpty()) {
             throw new DataNotFoundException("Пользователь с id = " + id + " не найден.");
         }
-        return map(optionalUser.get());
+        return UserMapper.map(optionalUser.get());
     }
 
     @Override
@@ -39,7 +37,7 @@ public class UserServiceImpl implements UserService {
         User user = UserMapper.map(userDto);
 
         storage.isEmailExist(user.getEmail());
-        return map(storage.add(user));
+        return UserMapper.map(storage.add(user));
     }
 
     @Override
@@ -61,7 +59,7 @@ public class UserServiceImpl implements UserService {
             storage.isEmailExist(newUserDto.getEmail());
             oldUser.setEmail(newUserDto.getEmail());
         }
-        return map(storage.update(oldUser));
+        return UserMapper.map(storage.update(oldUser));
     }
 
     @Override
@@ -69,7 +67,7 @@ public class UserServiceImpl implements UserService {
         if (!isUserExist(id)) {
             throw new DataNotFoundException("Пользователь для удаления с id = " + id + " не найден.");
         }
-        return map(storage.remove(id));
+        return UserMapper.map(storage.remove(id));
     }
 
     @Override
