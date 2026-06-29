@@ -1,47 +1,43 @@
 package ru.practicum.shareit.item;
 
-import org.springframework.beans.factory.annotation.Qualifier;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import ru.practicum.shareit.booking.Booking;
+import ru.practicum.shareit.booking.BookingRepository;
 import ru.practicum.shareit.exception.DataNotFoundException;
+import ru.practicum.shareit.exception.ValidationException;
+import ru.practicum.shareit.item.dto.CommentDto;
+import ru.practicum.shareit.item.dto.ItemAdvancedDto;
+import ru.practicum.shareit.item.dto.ItemDto;
 import ru.practicum.shareit.user.User;
-import ru.practicum.shareit.user.UserStorage;
+import ru.practicum.shareit.user.UserRepository;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
 @Service
+@RequiredArgsConstructor
 public class ItemServiceImpl implements ItemService {
-    private final ItemStorage itemStorage;
-    private final UserStorage userStorage;
-
-    public ItemServiceImpl(@Qualifier("itemStorageInMemory") ItemStorage itemStorage,
-                           @Qualifier("userStorageInMemory") UserStorage userStorage) {
-        this.itemStorage = itemStorage;
-        this.userStorage = userStorage;
-    }
+    private final ItemRepository itemRepository;
+    private final UserRepository userRepository;
+    private final BookingRepository bookingRepository;
+    private final CommentRepository commentRepository;
 
     @Override
     public ItemDto add(ItemDto itemDto, Long userId) {
-        Item item = ItemMapper.map(itemDto);
-        Optional<User> optionalUser = userStorage.get(userId);
+        Item item = ItemMapper.mapItemDtoToItem(itemDto);
+        User user = takeUserById(userId);
 
-        if (optionalUser.isEmpty()) {
-            throw new DataNotFoundException("Пользователь с id = " + userId + " не найден.");
-        }
-        item.setOwner(optionalUser.get());
-        return ItemMapper.map(itemStorage.add(item));
+        item.setOwner(user);
+        return ItemMapper.mapItemToItemDto(itemRepository.save(item));
     }
 
     @Override
     public ItemDto update(ItemDto newItemDto, Long userId, Long itemId) {
         newItemDto.setId(itemId);
 
-        Optional<Item> optionalOldItem = itemStorage.get(newItemDto.getId());
-        if (optionalOldItem.isEmpty()) {
-            throw new DataNotFoundException("Вещь с id = " + itemId + " не найдена.");
-        }
-
-        Item oldItem = optionalOldItem.get();
+        Item oldItem = takeItemById(newItemDto.getId());
 
         if (!oldItem.getOwner().getId().equals(userId)) {
             throw new DataNotFoundException("Пользователь с id = " + userId + " не является владельцем вещи.");
@@ -56,27 +52,46 @@ public class ItemServiceImpl implements ItemService {
         if (newItemDto.getAvailable() != null) {
             oldItem.setAvailable(newItemDto.getAvailable());
         }
-        return ItemMapper.map(itemStorage.update(oldItem));
+        return ItemMapper.mapItemToItemDto(itemRepository.save(oldItem));
     }
 
     @Override
-    public ItemDto get(Long itemId) {
-        Optional<Item> optionalItem = itemStorage.get(itemId);
+    public ItemAdvancedDto get(Long itemId) {
+        Item item = takeItemById(itemId);
 
-        if (optionalItem.isEmpty()) {
-            throw new DataNotFoundException("Вещь с id = " + itemId + " не найдена.");
-        }
-        return ItemMapper.map(optionalItem.get());
+        ItemAdvancedDto itemAdvancedDto = ItemMapper.mapItemToItemAdvancedDto(item);
+        itemAdvancedDto.setComments(commentRepository.findAllByItem(item).stream()
+                .map(ItemMapper::mapCommentToCommentDto)
+                .toList());
+
+        return itemAdvancedDto;
     }
 
     @Override
-    public List<ItemDto> getOwnerAll(Long userId) {
-        if (!userStorage.isUserExist(userId)) {
-            throw new DataNotFoundException("Пользователь с id = " + userId + " не найден.");
-        }
-        return itemStorage.getOwnerAll(userId).stream()
-                .map(ItemMapper::map)
+    public List<ItemAdvancedDto> getOwnerAll(Long userId) {
+        User owner = takeUserById(userId);
+
+        List<ItemAdvancedDto> items = itemRepository.findAllByOwnerId(userId).stream()
+                .map(ItemMapper::mapItemToItemAdvancedDto)
                 .toList();
+
+        List<Booking> bookings = bookingRepository.findAllByItemOwnerOrderByStartDesc(owner);
+
+        for (ItemAdvancedDto item : items) {
+            setLastAndNextBooking(item, bookings);
+        }
+
+        List<Comment> comments = commentRepository.findAllByItemOwner(owner);
+
+        for (ItemAdvancedDto item : items) {
+            for (Comment comment : comments) {
+                if (comment.getItem().getId().equals(item.getId())) {
+                    item.getComments().add(ItemMapper.mapCommentToCommentDto(comment));
+                }
+            }
+        }
+
+        return items;
     }
 
     @Override
@@ -84,13 +99,62 @@ public class ItemServiceImpl implements ItemService {
         if (text.isBlank()) {
             return List.of();
         }
-        return itemStorage.find(text.toLowerCase()).stream()
-                .map(ItemMapper::map)
+        return itemRepository.findAllByNameOrDescriptionContainingAndAvailableIsTrue(text.toLowerCase()).stream()
+                .map(ItemMapper::mapItemToItemDto)
                 .toList();
     }
 
     @Override
-    public Boolean isItemExist(Long id) {
-        return itemStorage.isItemExist(id);
+    public CommentDto addComment(CommentDto commentDto, Long itemId, Long userId) {
+        LocalDateTime currentDateTime = LocalDateTime.now();
+        User consumer = takeUserById(userId);
+        Item item = takeItemById(itemId);
+
+        Booking booking = bookingRepository.findByBookerAndItemAndEndBefore(consumer, item,
+                currentDateTime);
+        if (booking == null) {
+            throw new ValidationException("Подходящая запись бронирования для создания отзыва не найдена.");
+        }
+
+        Comment comment = ItemMapper.mapCommentDtoToComment(commentDto);
+        comment.setItem(item);
+        comment.setAuthor(consumer);
+        comment.setCreated(currentDateTime);
+
+        return ItemMapper.mapCommentToCommentDto(commentRepository.save(comment));
+    }
+
+    private User takeUserById(Long userId) {
+        Optional<User> optionalUser = userRepository.findById(userId);
+
+        if (optionalUser.isEmpty()) {
+            throw new DataNotFoundException("Пользователь с id = " + userId + " не найден.");
+        }
+        return optionalUser.get();
+    }
+
+    private Item takeItemById(Long itemId) {
+        Optional<Item> optionalItem = itemRepository.findById(itemId);
+
+        if (optionalItem.isEmpty()) {
+            throw new DataNotFoundException("Вещь с id = " + itemId + " не найдена.");
+        }
+        return optionalItem.get();
+    }
+
+    private void setLastAndNextBooking(ItemAdvancedDto item, List<Booking> bookings) {
+        for (Booking booking : bookings) {
+            if (booking.getItem().getId().equals(item.getId())) {
+                if (booking.getEnd().isBefore(LocalDateTime.now())
+                        && (item.getLastBooking() == null
+                        || item.getLastBooking().getStart().isBefore(booking.getStart()))) {
+                    item.setLastBooking(booking);
+                } else if (booking.getStart().isAfter(LocalDateTime.now())
+                        && (item.getNextBooking() == null
+                        || item.getNextBooking().getStart().isAfter(booking.getStart()))) {
+                    item.setNextBooking(booking);
+                }
+            }
+        }
     }
 }

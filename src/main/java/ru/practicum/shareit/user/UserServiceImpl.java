@@ -1,6 +1,6 @@
 package ru.practicum.shareit.user;
 
-import org.springframework.beans.factory.annotation.Qualifier;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import ru.practicum.shareit.exception.DataNotFoundException;
 
@@ -8,47 +8,42 @@ import java.util.List;
 import java.util.Optional;
 
 @Service
+@RequiredArgsConstructor
 public class UserServiceImpl implements UserService {
-    private final UserStorage storage;
-
-    public UserServiceImpl(@Qualifier("userStorageInMemory") UserStorage storage) {
-        this.storage = storage;
-    }
+    private final UserRepository repository;
 
     @Override
     public List<UserDto> getAll() {
-        return storage.getAll().stream()
-                .map(UserMapper::map)
+        return repository.findAll().stream()
+                .map(UserMapper::mapUserToUserDto)
                 .toList();
     }
 
     @Override
     public UserDto get(Long id) {
-        Optional<User> optionalUser = storage.get(id);
+        Optional<User> optionalUser = repository.findById(id);
 
         if (optionalUser.isEmpty()) {
             throw new DataNotFoundException("Пользователь с id = " + id + " не найден.");
         }
-        return UserMapper.map(optionalUser.get());
+        return UserMapper.mapUserToUserDto(optionalUser.get());
     }
 
     @Override
     public UserDto add(UserDto userDto) {
-        User user = UserMapper.map(userDto);
+        User user = UserMapper.mapUserDtoToUser(userDto);
 
-        storage.isEmailExist(user.getEmail());
-        return UserMapper.map(storage.add(user));
+        return UserMapper.mapUserToUserDto(repository.save(user));
     }
 
     @Override
     public UserDto update(UserDto newUserDto, Long userId) {
         newUserDto.setId(userId);
 
-        Optional<User> optionalOldUser = storage.get(newUserDto.getId());
+        Optional<User> optionalOldUser = repository.findById(newUserDto.getId());
         if (optionalOldUser.isEmpty()) {
             throw new DataNotFoundException("Пользователь с id = " + userId + " не найден.");
         }
-
         User oldUser = optionalOldUser.get();
 
         if (newUserDto.getName() != null && !newUserDto.getName().isBlank()) {
@@ -56,22 +51,21 @@ public class UserServiceImpl implements UserService {
         }
         // проверка на email выполняется в UserDto с помощью аннотации
         if (newUserDto.getEmail() != null && !newUserDto.getEmail().isBlank()) {
-            storage.isEmailExist(newUserDto.getEmail());
             oldUser.setEmail(newUserDto.getEmail());
         }
-        return UserMapper.map(storage.update(oldUser));
+        return UserMapper.mapUserToUserDto(repository.save(oldUser));
     }
 
     @Override
     public UserDto remove(Long id) {
-        if (!isUserExist(id)) {
+        Optional<User> optionalUser = repository.findById(id);
+
+        if (optionalUser.isEmpty()) {
             throw new DataNotFoundException("Пользователь для удаления с id = " + id + " не найден.");
         }
-        return UserMapper.map(storage.remove(id));
-    }
+        User user = optionalUser.get();
+        repository.deleteById(id);
 
-    @Override
-    public Boolean isUserExist(Long id) {
-        return storage.isUserExist(id);
+        return UserMapper.mapUserToUserDto(user);
     }
 }

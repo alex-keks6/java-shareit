@@ -4,7 +4,7 @@ import lombok.experimental.UtilityClass;
 
 @UtilityClass
 public class UserMapper {
-    public UserDto map(User user) {
+    public UserDto mapUserToUserDto(User user) {
         return UserDto.builder()
                 .id(user.getId())
                 .name(user.getName())
@@ -12,7 +12,7 @@ public class UserMapper {
                 .build();
     }
 
-    public User map(UserDto userDto) {
+    public User mapUserDtoToUser(UserDto userDto) {
         return User.builder()
                 .id(userDto.getId())
                 .name(userDto.getName())
