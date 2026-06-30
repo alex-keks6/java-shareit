@@ -8,7 +8,6 @@ import lombok.*;
 @AllArgsConstructor
 @Getter
 @Setter
-@EqualsAndHashCode
 @Entity
 @Table(name = "users")
 public class User {
@@ -21,4 +20,15 @@ public class User {
 
     @Column(name = "email", nullable = false)
     private String email;
+
+    @Override
+    public final boolean equals(Object o) {
+        if (!(o instanceof User that)) return false;
+        return getId() != null && getId().equals(that.getId());
+    }
+
+    @Override
+    public final int hashCode() {
+        return User.class.hashCode();
+    }
 }

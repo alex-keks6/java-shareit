@@ -3,6 +3,7 @@ package ru.practicum.shareit.item;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import ru.practicum.shareit.booking.Booking;
+import ru.practicum.shareit.booking.BookingMapper;
 import ru.practicum.shareit.booking.BookingRepository;
 import ru.practicum.shareit.exception.DataNotFoundException;
 import ru.practicum.shareit.exception.ValidationException;
@@ -148,11 +149,11 @@ public class ItemServiceImpl implements ItemService {
                 if (booking.getEnd().isBefore(LocalDateTime.now())
                         && (item.getLastBooking() == null
                         || item.getLastBooking().getStart().isBefore(booking.getStart()))) {
-                    item.setLastBooking(booking);
+                    item.setLastBooking(BookingMapper.mapBookingToBookingStatusDto(booking));
                 } else if (booking.getStart().isAfter(LocalDateTime.now())
                         && (item.getNextBooking() == null
                         || item.getNextBooking().getStart().isAfter(booking.getStart()))) {
-                    item.setNextBooking(booking);
+                    item.setNextBooking(BookingMapper.mapBookingToBookingStatusDto(booking));
                 }
             }
         }

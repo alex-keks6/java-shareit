@@ -13,7 +13,6 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @Getter
 @Setter
-@EqualsAndHashCode
 @Entity
 @Table(name = "bookings")
 public class Booking {
@@ -37,4 +36,15 @@ public class Booking {
 
     @Enumerated(EnumType.STRING)
     private BookingStatus status;
+
+    @Override
+    public final boolean equals(Object o) {
+        if (!(o instanceof Booking that)) return false;
+        return getId() != null && getId().equals(that.getId());
+    }
+
+    @Override
+    public final int hashCode() {
+        return Booking.class.hashCode();
+    }
 }

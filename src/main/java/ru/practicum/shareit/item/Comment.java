@@ -11,7 +11,6 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @Getter
 @Setter
-@EqualsAndHashCode
 @Entity
 @Table(name = "comments")
 public class Comment {
@@ -27,9 +26,20 @@ public class Comment {
     private Item item;
 
     @ManyToOne
-    @JoinColumn(name = "author_id")
+    @JoinColumn(name = "user_id")
     private User author;
 
     @Column(name = "created")
     private LocalDateTime created;
+
+    @Override
+    public final boolean equals(Object o) {
+        if (!(o instanceof Comment that)) return false;
+        return getId() != null && getId().equals(that.getId());
+    }
+
+    @Override
+    public final int hashCode() {
+        return Comment.class.hashCode();
+    }
 }

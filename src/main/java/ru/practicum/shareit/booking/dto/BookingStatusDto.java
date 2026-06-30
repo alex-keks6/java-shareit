@@ -4,7 +4,7 @@ import lombok.Builder;
 import lombok.Data;
 import ru.practicum.shareit.booking.enums.BookingStatus;
 import ru.practicum.shareit.item.Item;
-import ru.practicum.shareit.user.User;
+import ru.practicum.shareit.user.UserDto;
 
 import java.time.LocalDateTime;
 
@@ -16,5 +16,5 @@ public class BookingStatusDto {
     private LocalDateTime start;
     private LocalDateTime end;
     private BookingStatus status;
-    private User booker;
+    private UserDto booker;
 }

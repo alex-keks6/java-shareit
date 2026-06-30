@@ -9,7 +9,6 @@ import ru.practicum.shareit.user.User;
 @AllArgsConstructor
 @Getter
 @Setter
-@EqualsAndHashCode
 @Entity
 @Table(name = "items")
 public class Item {
@@ -24,9 +23,20 @@ public class Item {
     private String description;
 
     @ManyToOne
-    @JoinColumn(name = "owner_id")
+    @JoinColumn(name = "user_id")
     private User owner;
 
     @Column(name = "available", nullable = false)
     private Boolean available;
+
+    @Override
+    public final boolean equals(Object o) {
+        if (!(o instanceof Item that)) return false;
+        return getId() != null && getId().equals(that.getId());
+    }
+
+    @Override
+    public final int hashCode() {
+        return Item.class.hashCode();
+    }
 }
