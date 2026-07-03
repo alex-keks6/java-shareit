@@ -4,39 +4,42 @@ import jakarta.persistence.*;
 import lombok.*;
 import ru.practicum.shareit.user.User;
 
+import java.time.LocalDateTime;
+
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
 @Getter
 @Setter
 @Entity
-@Table(name = "items")
-public class Item {
+@Table(name = "comments")
+public class Comment {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "name", nullable = false)
-    private String name;
+    @Column(name = "text", nullable = false)
+    private String text;
 
-    @Column(name = "description", nullable = false)
-    private String description;
+    @ManyToOne
+    @JoinColumn(name = "item_id")
+    private Item item;
 
     @ManyToOne
     @JoinColumn(name = "user_id")
-    private User owner;
+    private User author;
 
-    @Column(name = "available", nullable = false)
-    private Boolean available;
+    @Column(name = "created")
+    private LocalDateTime created;
 
     @Override
     public final boolean equals(Object o) {
-        if (!(o instanceof Item that)) return false;
+        if (!(o instanceof Comment that)) return false;
         return getId() != null && getId().equals(that.getId());
     }
 
     @Override
     public final int hashCode() {
-        return Item.class.hashCode();
+        return Comment.class.hashCode();
     }
 }

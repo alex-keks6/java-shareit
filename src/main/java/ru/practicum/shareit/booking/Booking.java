@@ -1,19 +1,50 @@
 package ru.practicum.shareit.booking;
 
-import lombok.Builder;
-import lombok.Data;
+import jakarta.persistence.*;
+import lombok.*;
+import ru.practicum.shareit.booking.enums.BookingStatus;
 import ru.practicum.shareit.item.Item;
 import ru.practicum.shareit.user.User;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 
-@Data
 @Builder
+@NoArgsConstructor
+@AllArgsConstructor
+@Getter
+@Setter
+@Entity
+@Table(name = "bookings")
 public class Booking {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    @ManyToOne
+    @JoinColumn(name = "item_id")
     private Item item;
-    private LocalDate date;
-    private User consumer;
+
+    @Column(name = "booking_start", nullable = false)
+    private LocalDateTime start;
+
+    @Column(name = "booking_end", nullable = false)
+    private LocalDateTime end;
+
+    @ManyToOne
+    @JoinColumn(name = "booker_id")
+    private User booker;
+
+    @Enumerated(EnumType.STRING)
     private BookingStatus status;
-    private String comment;
+
+    @Override
+    public final boolean equals(Object o) {
+        if (!(o instanceof Booking that)) return false;
+        return getId() != null && getId().equals(that.getId());
+    }
+
+    @Override
+    public final int hashCode() {
+        return Booking.class.hashCode();
+    }
 }

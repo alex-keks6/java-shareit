@@ -12,6 +12,4 @@ public interface UserService {
     UserDto update(UserDto userDto, Long userId);
 
     UserDto remove(Long id);
-
-    Boolean isUserExist(Long id);
 }
