@@ -3,16 +3,12 @@ package ru.practicum.shareit.item;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
-import org.springframework.stereotype.Controller;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-import ru.practicum.shareit.booking.BookingClient;
 import ru.practicum.shareit.item.dto.CommentRequestDto;
 import ru.practicum.shareit.item.dto.ItemRequestDto;
 import ru.practicum.shareit.validation.Add;
 import ru.practicum.shareit.validation.Update;
-
-import java.util.List;
 
 @RestController
 @RequestMapping(path = "/items")
@@ -25,7 +21,7 @@ public class ItemController {
 
     @PostMapping
     public ResponseEntity<Object> addItem(@RequestHeader(USER_ID_REQUEST_HEADER) long userId,
-                                      @Validated(Add.class) @RequestBody ItemRequestDto itemDto
+                                          @Validated(Add.class) @RequestBody ItemRequestDto itemDto
     ) {
         log.info("Post item {} with userId={}", itemDto, userId);
         return itemClient.addItem(userId, itemDto);
@@ -33,8 +29,8 @@ public class ItemController {
 
     @PatchMapping("/{itemId}")
     public ResponseEntity<Object> updateItem(@RequestHeader(USER_ID_REQUEST_HEADER) long userId,
-                                         @Validated(Update.class) @RequestBody ItemRequestDto itemDto,
-                                         @PathVariable Long itemId) {
+                                             @Validated(Update.class) @RequestBody ItemRequestDto itemDto,
+                                             @PathVariable Long itemId) {
         log.info("Patch item {} with userId={}", itemDto, userId);
         return itemClient.updateItem(userId, itemDto, itemId);
     }
