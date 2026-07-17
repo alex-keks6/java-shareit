@@ -32,12 +32,12 @@ public class ItemRequest {
 
     @Override
     public final boolean equals(Object o) {
-        if (!(o instanceof Item that)) return false;
+        if (!(o instanceof ItemRequest that)) return false;
         return getId() != null && getId().equals(that.getId());
     }
 
     @Override
     public final int hashCode() {
-        return Item.class.hashCode();
+        return ItemRequest.class.hashCode();
     }
 }
