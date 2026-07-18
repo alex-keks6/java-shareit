@@ -19,7 +19,7 @@ public class ItemRequestController {
     private static final String USER_ID_REQUEST_HEADER = "X-Sharer-User-Id";
 
     @PostMapping
-    public ResponseEntity<Object> addItemRequest(@Positive  @RequestHeader(USER_ID_REQUEST_HEADER) Long userId,
+    public ResponseEntity<Object> addItemRequest(@Positive @RequestHeader(USER_ID_REQUEST_HEADER) Long userId,
                                                  @Validated(Add.class) @RequestBody ItemRequestDto itemRequestDto) {
         log.info("Create item request {} by user with userId={}", itemRequestDto, userId);
         return itemRequestClient.addItemRequest(userId, itemRequestDto);
