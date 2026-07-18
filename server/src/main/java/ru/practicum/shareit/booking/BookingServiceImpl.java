@@ -3,6 +3,7 @@ package ru.practicum.shareit.booking;
 import lombok.AllArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.shareit.booking.dto.BookingDto;
 import ru.practicum.shareit.booking.dto.BookingStatusDto;
 import ru.practicum.shareit.booking.enums.BookingState;
@@ -20,11 +21,13 @@ import java.util.Optional;
 
 @Service
 @AllArgsConstructor
+@Transactional(readOnly = true)
 public class BookingServiceImpl implements BookingService {
     private BookingRepository bookingRepository;
     private UserRepository userRepository;
     private ItemRepository itemRepository;
 
+    @Transactional
     @Override
     public BookingStatusDto add(BookingDto bookingDto, Long userId) {
         User booker = takeUserById(userId);
@@ -42,6 +45,7 @@ public class BookingServiceImpl implements BookingService {
         return BookingMapper.mapBookingToBookingStatusDto(bookingRepository.save(booking));
     }
 
+    @Transactional
     @Override
     public BookingStatusDto confirm(Long bookingId, Boolean approved, Long userId) {
         Booking booking = takeBookingById(bookingId);

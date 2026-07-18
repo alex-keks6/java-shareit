@@ -2,6 +2,7 @@ package ru.practicum.shareit.request;
 
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.shareit.exception.DataNotFoundException;
 import ru.practicum.shareit.item.Item;
 import ru.practicum.shareit.item.ItemMapper;
@@ -19,11 +20,13 @@ import java.util.Optional;
 
 @Service
 @AllArgsConstructor
+@Transactional(readOnly = true)
 public class ItemRequestServiceImpl implements ItemRequestService {
     private ItemRequestRepository itemRequestRepository;
     private UserRepository userRepository;
     private ItemRepository itemRepository;
 
+    @Transactional
     @Override
     public ItemRequestDto addItemRequest(Long userId, ItemRequestDto itemRequestDto) {
         ItemRequest itemRequest = ItemRequestMapper.mapItemRequestDtoToItemRequest(itemRequestDto);

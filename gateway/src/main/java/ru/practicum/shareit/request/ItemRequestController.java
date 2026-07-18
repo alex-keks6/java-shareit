@@ -1,5 +1,6 @@
 package ru.practicum.shareit.request;
 
+import jakarta.validation.constraints.Positive;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -18,14 +19,14 @@ public class ItemRequestController {
     private static final String USER_ID_REQUEST_HEADER = "X-Sharer-User-Id";
 
     @PostMapping
-    public ResponseEntity<Object> addItemRequest(@RequestHeader(USER_ID_REQUEST_HEADER) Long userId,
+    public ResponseEntity<Object> addItemRequest(@Positive  @RequestHeader(USER_ID_REQUEST_HEADER) Long userId,
                                                  @Validated(Add.class) @RequestBody ItemRequestDto itemRequestDto) {
         log.info("Create item request {} by user with userId={}", itemRequestDto, userId);
         return itemRequestClient.addItemRequest(userId, itemRequestDto);
     }
 
     @GetMapping
-    public ResponseEntity<Object> getUserItemRequests(@RequestHeader(USER_ID_REQUEST_HEADER) Long userId) {
+    public ResponseEntity<Object> getUserItemRequests(@Positive @RequestHeader(USER_ID_REQUEST_HEADER) Long userId) {
         log.info("Get item requests by user with userId={}", userId);
         return itemRequestClient.getUserItemRequests(userId);
     }
@@ -37,7 +38,7 @@ public class ItemRequestController {
     }
 
     @GetMapping("/{requestId}")
-    public ResponseEntity<Object> getItemRequest(@PathVariable Long requestId) {
+    public ResponseEntity<Object> getItemRequest(@Positive @PathVariable Long requestId) {
         log.info("Get item request with requestId={}", requestId);
         return itemRequestClient.getItemRequest(requestId);
     }
